@@ -18,3 +18,26 @@
 @media (max-width:1050px) { .portal-main { margin-left:0; }.portal-sidebar { transform:translateX(-100%); transition:transform .2s ease; box-shadow:18px 0 50px color-mix(in srgb,var(--foreground) 10%,transparent); }.portal-sidebar.is-open { transform:none; }.portal-close,.portal-menu { display:grid; place-items:center; }.portal-header { padding:0 20px; }.portal-header>div:first-of-type { flex:1; }.portal-content { width:min(100% - 40px,800px); }.case-table-head,.case-row { grid-template-columns:1.5fr 1fr 1.2fr 1.2fr 20px; }.case-table-head span:nth-child(5),.case-row time { display:none; } }
 @media (max-width:720px) { .portal-sidebar { width:min(280px,86vw); }.portal-content { width:min(100% - 28px,580px); padding-top:28px; }.portal-welcome,.case-header { align-items:flex-start; flex-direction:column; }.metrics-grid { grid-template-columns:repeat(2,1fr); }.portal-two-col,.case-workspace-grid { grid-template-columns:1fr; }.case-context { order:-1; }.case-table-head,.case-row { grid-template-columns:1.6fr 1fr 20px; }.case-table-head span:nth-child(2),.case-row>span:nth-child(2),.case-table-head span:nth-child(3),.case-row>span:nth-child(3),.case-table-head span:nth-child(4),.case-row>div:nth-child(4) { display:none; }.case-row { padding:14px 6px; }.case-controls { flex-wrap:wrap; }.case-controls select { flex:1; }.filter-button { min-height:36px; }.case-facts,.entity-grid { grid-template-columns:repeat(2,1fr); }.evidence-row { grid-template-columns:34px 1fr 15px; }.evidence-row>span,.evidence-row>small { display:none; }.portal-card { padding:18px; }.portal-header-actions { gap:10px; }.portal-header-actions button:first-child { display:none; }.case-header-actions { width:100%; }.case-header-actions>* { flex:1; }.audit-list>div { grid-template-columns:1fr; gap:5px; }.portal-graph { min-height:300px; }.graph-node { min-width:96px; }.line-one,.line-two,.line-three { width:105px; } }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior:auto !important; animation:none !important; transition-duration:.01ms !important; }.reveal { opacity:1; transform:none; } }
+.mobile-portal-link {
+  display: none;
+}
+@media (max-width: 850px) {
+  .mobile-portal-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding: 16px 0 12px;
+    border-top: 1px solid var(--border);
+    color: var(--foreground) !important;
+    font-weight: 600;
+  }
+  .mobile-portal-link svg {
+    color: var(--primary);
+  }
+}
+@media (max-width: 850px) {
+  .nav-actions .portal {
+    display: none;
+  }
+}
