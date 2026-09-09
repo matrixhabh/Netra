@@ -3,13 +3,13 @@
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowUpRight, BarChart3, Bell, BookOpen, ChevronDown, ChevronRight, CircleHelp, FileText, FolderKanban, LayoutDashboard, Menu, Network, Plus, Search, ShieldCheck, SlidersHorizontal, Users, X } from 'lucide-react'
+import { ArrowUpRight, BarChart3, Bell, BookOpen, ChevronDown, ChevronRight, CircleHelp, FileText, FileSearch, FolderKanban, LayoutDashboard, Menu, Network, Plus, Search, ShieldCheck, SlidersHorizontal, Users, X } from 'lucide-react'
 import { cases, getAudit, getCase, getEntities, getEvidence, getTimeline, type CasePriority, type CaseStatus, type InvestigationCase } from '@/lib/data/cases'
 import { InvestigationAssistant } from '@/components/investigation-assistant'
 import { NetworkGraphContainer } from '@/components/NetworkGraph/NetworkGraphContainer'
 import type { Locale } from '@/lib/i18n/types'
 
-const nav = [['Overview', '/officer', LayoutDashboard], ['Cases', '/officer/cases', FolderKanban], ['Evidence', '/officer/cases/C-1042?tab=evidence', FileText], ['Entities', '/officer/cases/C-1042?tab=entities', Users], ['Intelligence', '/officer/intelligence', BarChart3]] as const
+const nav = [['Overview', '/officer', LayoutDashboard], ['Cases', '/officer/cases', FolderKanban], ['FIR Analyzer', '/officer/fir-analyzer', FileSearch], ['Evidence', '/officer/cases/C-1042?tab=evidence', FileText], ['Entities', '/officer/cases/C-1042?tab=entities', Users], ['Intelligence', '/officer/intelligence', BarChart3]] as const
 const portalTools = [['Help & guidance', '/officer/help', CircleHelp], ['Documentation', '/officer/docs', BookOpen], ['Settings', '/officer/settings', SlidersHorizontal]] as const
 
 function PortalLogo() { return <Link href="/" className="portal-logo"><span><ShieldCheck size={19} /></span><strong>NETRA</strong><small>OFFICER PORTAL</small></Link> }
