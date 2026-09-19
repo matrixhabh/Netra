@@ -1,10 +1,10 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
-import { OfficerOverview } from '@/components/officer-portal'
+import { AuthForm } from '@/components/auth-form'
 
-export default async function OfficerPage() {
+export default async function SignInPage() {
   const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) redirect('/sign-in')
-  return <OfficerOverview />
+  if (session?.user) redirect('/officer')
+  return <AuthForm mode="sign-in" />
 }
