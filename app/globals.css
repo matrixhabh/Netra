@@ -67,3 +67,27 @@
 .radar-pulse {
   animation: radar-pulse 2.2s infinite ease-in-out;
 }
+
+.netra-search { position: relative; }
+.netra-search-trigger { display: grid; place-items: center; color: var(--muted-foreground); cursor: pointer; }
+.netra-search-trigger:hover { color: var(--foreground); }
+.netra-search-popover { position: absolute; top: calc(100% + 14px); right: -8px; z-index: 80; width: min(460px, calc(100vw - 32px)); overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--card); box-shadow: 0 14px 40px color-mix(in srgb, var(--foreground) 12%, transparent); }
+.netra-search-input-wrap { display: flex; align-items: center; gap: 9px; border-bottom: 1px solid var(--border); padding: 12px 14px; color: var(--muted-foreground); }
+.netra-search-input-wrap input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 13px; }
+.netra-search-input-wrap kbd { border: 1px solid var(--border); border-radius: 4px; padding: 2px 5px; color: var(--muted-foreground); font-size: 10px; }
+.netra-search-input-wrap button { display: grid; place-items: center; color: var(--muted-foreground); }
+.netra-search-results { display: grid; gap: 2px; padding: 7px; }
+.netra-search-heading { padding: 7px 9px 5px; color: var(--muted-foreground); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.netra-search-result { display: flex; align-items: center; gap: 10px; width: 100%; border-radius: 7px; padding: 9px; color: var(--foreground); text-align: left; cursor: pointer; }
+.netra-search-result:hover, .netra-search-result.selected { background: var(--interactive); }
+.netra-search-icon { display: grid; flex: none; place-items: center; width: 30px; height: 30px; border-radius: 6px; background: color-mix(in srgb, var(--primary) 10%, var(--card)); color: var(--primary); }
+.netra-search-copy { display: grid; flex: 1; gap: 3px; min-width: 0; }
+.netra-search-copy strong { font-size: 12px; font-weight: 650; }
+.netra-search-copy small { overflow: hidden; color: var(--muted-foreground); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.netra-search-category { color: var(--muted-foreground); font-size: 9px; white-space: nowrap; }
+.netra-search-result > svg { flex: none; color: var(--muted-foreground); }
+.netra-search-empty { display: grid; gap: 5px; padding: 18px 10px 20px; text-align: center; }
+.netra-search-empty strong { font-size: 12px; }
+.netra-search-empty span { color: var(--muted-foreground); font-size: 11px; }
+@media (max-width: 520px) { .netra-search-popover { position: fixed; top: 72px; right: 16px; left: 16px; width: auto; } .netra-search-category { display: none; } }
+
