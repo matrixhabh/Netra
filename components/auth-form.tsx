@@ -11,22 +11,35 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
+  const [googlePending, setGooglePending] = useState(false)
   const [pending, setPending] = useState(false)
   const isSignUp = mode === 'sign-up'
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
+    if (!email.trim()) { setError('Please enter your email address.'); return }
+    if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
+    if (isSignUp && !name.trim()) { setError('Please enter your full name.'); return }
+    if (isSignUp && password !== confirmPassword) { setError('Passwords do not match.'); return }
     setPending(true)
     const result = isSignUp
-      ? await signUp.email({ name, email, password })
+      ? await signUp.email({ name: name.trim(), email: email.trim(), password })
       : await signIn.email({ email, password })
     setPending(false)
-    if (result.error) { setError('Unable to authenticate with those details. Please try again.'); return }
+    if (result.error) { setPending(false); setError(isSignUp ? 'Unable to create the account. Check your details or use a different email.' : 'Incorrect email or password. Please try again.'); return }
     router.push('/officer')
     router.refresh()
   }
 
-  return <main className="auth-page"><div className="auth-card"><div className="auth-brand"><span><ShieldCheck size={20} /></span><strong>NETRA</strong><small>SECURE INVESTIGATION PLATFORM</small></div><div className="auth-heading"><p className="portal-eyebrow">Officer access</p><h1>{isSignUp ? 'Create your account' : 'Welcome back'}</h1><p>{isSignUp ? 'Set up secure access to the investigation workspace.' : 'Sign in to continue to your investigation workspace.'}</p></div><form onSubmit={submit} className="auth-form">{isSignUp && <label>Full name<input value={name} onChange={(event) => setName(event.target.value)} required autoComplete="name" /></label>}<label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" /></label><label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} autoComplete={isSignUp ? 'new-password' : 'current-password'} /></label>{error && <p className="auth-error" role="alert">{error}</p>}<button className="portal-primary auth-submit" disabled={pending}>{pending ? 'Authenticating…' : isSignUp ? 'Create account' : 'Sign in'}</button></form><p className="auth-switch">{isSignUp ? 'Already have an account?' : 'Need an account?'} <Link href={isSignUp ? '/sign-in' : '/sign-up'}>{isSignUp ? 'Sign in' : 'Create one'}</Link></p></div></main>
+  async function continueWithGoogle() {
+    setError('')
+    setGooglePending(true)
+    const result = await signIn.social({ provider: 'google', callbackURL: '/officer' })
+    if (result.error) { setGooglePending(false); setError('Google sign-in is unavailable. Configure Google OAuth and try again.') }
+  }
+
+  return <main className="auth-page"><div className="auth-card"><div className="auth-brand"><span><ShieldCheck size={20} /></span><strong>NETRA</strong><small>SECURE INVESTIGATION PLATFORM</small></div><div className="auth-heading"><p className="portal-eyebrow">Officer access</p><h1>{isSignUp ? 'Create your account' : 'Welcome back'}</h1><p>{isSignUp ? 'Set up secure access to the investigation workspace.' : 'Sign in to continue to your investigation workspace.'}</p></div><form onSubmit={submit} className="auth-form">{isSignUp && <label>Full name<input value={name} onChange={(event) => setName(event.target.value)} required autoComplete="name" /></label>}<label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" /></label><label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} autoComplete={isSignUp ? 'new-password' : 'current-password'} /></label>{isSignUp && <label>Confirm password<input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={8} autoComplete="new-password" /></label>}{error && <p className="auth-error" role="alert">{error}</p>}<button className="portal-primary auth-submit" disabled={pending || googlePending}>{pending ? 'Authenticating…' : isSignUp ? 'Create account' : 'Sign in'}</button></form><div className="auth-divider"><span>or</span></div><button className="auth-google" onClick={continueWithGoogle} disabled={pending || googlePending}>{googlePending ? 'Connecting…' : 'Continue with Google'}</button><p className="auth-switch">{isSignUp ? 'Already have an account?' : 'Need an account?'} <Link href={isSignUp ? '/sign-in' : '/sign-up'}>{isSignUp ? 'Sign in' : 'Create one'}</Link></p></div></main>
 }
