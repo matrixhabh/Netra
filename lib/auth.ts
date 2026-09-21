@@ -3,7 +3,7 @@ import { pool } from '@/lib/db'
 
 // Google OAuth setup: create a Google OAuth Web Application credential and register
 // http://localhost:3000/api/auth/callback/google locally and
-// https://<production-domain>/api/auth/callback/google in production. Never commit credentials.
+// https://netra-ruby.vercel.app/api/auth/callback/google in production. Never commit credentials.
 
 const productionOrigins = [
   ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
@@ -24,5 +24,8 @@ export const auth = betterAuth({
     ? ['http://localhost:3000', ...[process.env.V0_RUNTIME_URL, process.env.V0_DEV_APP_URL, process.env.V0_BUILD_URL, process.env.V0_SANDBOX_URL].filter((origin): origin is string => Boolean(origin))]
     : productionOrigins,
   session: { expiresIn: 60 * 60 * 24 * 7, updateAge: 60 * 60 * 24 },
-  ...(process.env.NODE_ENV === 'development' ? { advanced: { defaultCookieAttributes: { sameSite: 'none' as const, secure: true } } } : {}),
+  advanced: {
+    database: { generateId: 'uuid' },
+    ...(process.env.NODE_ENV === 'development' ? { defaultCookieAttributes: { sameSite: 'none' as const, secure: true } } : {}),
+  },
 })
