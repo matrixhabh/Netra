@@ -115,4 +115,35 @@
 .netra-search-empty strong { font-size: 12px; }
 .netra-search-empty span { color: var(--muted-foreground); font-size: 11px; }
 @media (max-width: 520px) { .netra-search-popover { position: fixed; top: 72px; right: 16px; left: 16px; width: auto; } .netra-search-category { display: none; } }
+.evidence-copy { min-width: 0; flex: 1; }
+.evidence-copy strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.evidence-status { display: inline-flex; align-items: center; gap: 4px; color: var(--muted-foreground); font-size: 11px; white-space: nowrap; }
+.evidence-view { border: 0; background: none; font-size: 11px; font-weight: 700; cursor: pointer; }
+.evidence-empty { display: flex; align-items: center; gap: 8px; padding: 24px; color: var(--muted-foreground); font-size: 12px; }
+.netra-modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, #101820 52%, transparent); }
+.netra-modal { width: min(560px, 100%); max-height: min(760px, calc(100vh - 40px)); overflow: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--card); padding: 22px; box-shadow: 0 20px 60px color-mix(in srgb, #101820 28%, transparent); }
+.netra-modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.netra-modal-head h2 { margin: 5px 0 0; font-size: 20px; }
+.icon-button { display: grid; place-items: center; border: 0; background: transparent; color: var(--muted-foreground); cursor: pointer; }
+.netra-modal label { display: grid; gap: 6px; margin-top: 14px; color: var(--foreground); font-size: 12px; font-weight: 650; }
+.netra-modal label span { color: var(--muted-foreground); font-weight: 400; }
+.netra-modal input, .netra-modal textarea { width: 100%; border: 1px solid var(--border); border-radius: 7px; background: var(--background); color: var(--foreground); font: inherit; font-size: 13px; padding: 9px 10px; outline: 0; }
+.netra-modal textarea { resize: vertical; }
+.evidence-file-input { border: 1px dashed var(--border); border-radius: 8px; padding: 18px; text-align: center; cursor: pointer; }
+.evidence-file-input input { border: 0; padding: 0; }
+.selected-file { margin: 8px 0 0; color: var(--muted-foreground); font-size: 11px; }
+.netra-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.evidence-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0 0 18px; }
+.evidence-meta div { border: 1px solid var(--border); border-radius: 7px; padding: 9px; }
+.evidence-meta dt { color: var(--muted-foreground); font-size: 10px; text-transform: uppercase; }
+.evidence-meta dd { overflow: hidden; margin: 4px 0 0; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.evidence-preview { display: grid; min-height: 180px; place-items: center; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: var(--background); }
+.evidence-preview img { display: block; max-width: 100%; max-height: 420px; object-fit: contain; }
+.evidence-preview iframe { width: 100%; height: 480px; border: 0; }
+.evidence-preview audio, .evidence-preview video { width: min(100%, 480px); }
+.preview-unavailable { display: grid; gap: 8px; place-items: center; padding: 30px; color: var(--muted-foreground); text-align: center; font-size: 12px; }
+.evidence-download { margin-top: 14px; text-align: center; text-decoration: none; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 640px) { .evidence-meta { grid-template-columns: 1fr; } .evidence-row small { display: none; } .netra-modal { padding: 17px; } }
 

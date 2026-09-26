@@ -1,0 +1,43 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import { CheckCircle2, FileArchive, FileAudio, FileImage, FileJson, FileSpreadsheet, FileText, FileVideo, FileWarning, Loader2, Plus, X } from 'lucide-react'
+
+type PersistedEvidence = { id: string; caseId: string; originalFilename: string; mimeType: string; fileSize: number; uploadedBy: string; uploadedAt: string; status: string; description?: string | null }
+type DemoEvidence = { id: string; name: string; type: string; status: string; addedBy: string; addedAt: string }
+type EvidenceItem = PersistedEvidence | (DemoEvidence & { persisted: false })
+
+function isPersisted(item: EvidenceItem): item is PersistedEvidence { return 'originalFilename' in item }
+function fileLabel(mime: string) { if (mime.includes('pdf')) return 'PDF'; if (mime.startsWith('image/')) return 'Image'; if (mime.startsWith('audio/')) return 'Audio'; if (mime.startsWith('video/')) return 'Video'; if (mime.includes('spreadsheet') || mime.includes('excel') || mime.includes('csv')) return 'Spreadsheet'; if (mime.includes('json')) return 'JSON'; return 'Document' }
+function Icon({ mime }: { mime: string }) { const props = { size: 17 }; if (mime.startsWith('image/')) return <FileImage {...props} />; if (mime.startsWith('audio/')) return <FileAudio {...props} />; if (mime.startsWith('video/')) return <FileVideo {...props} />; if (mime.includes('json')) return <FileJson {...props} />; if (mime.includes('zip')) return <FileArchive {...props} />; if (mime.includes('spreadsheet') || mime.includes('excel') || mime.includes('csv')) return <FileSpreadsheet {...props} />; return <FileText {...props} /> }
+function displayDate(value: string) { return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value)) }
+
+export function EvidenceRegister({ caseId, demoItems }: { caseId: string; demoItems: DemoEvidence[] }) {
+  const [saved, setSaved] = useState<PersistedEvidence[]>([])
+  const [uploadOpen, setUploadOpen] = useState(false)
+  const [viewing, setViewing] = useState<EvidenceItem | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState('')
+  const [file, setFile] = useState<File | null>(null)
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+
+  async function loadEvidence() { setLoading(true); const response = await fetch(`/api/evidence?caseId=${encodeURIComponent(caseId)}`); if (response.ok) setSaved((await response.json()).evidence); setLoading(false) }
+  useEffect(() => { void loadEvidence() }, [caseId])
+  const items = useMemo<EvidenceItem[]>(() => [...saved, ...demoItems.map((item) => ({ ...item, persisted: false as const }))], [saved, demoItems])
+
+  async function upload() {
+    if (!file) { setError('Select a file to upload.'); return }
+    setUploading(true); setError(''); const form = new FormData(); form.append('caseId', caseId); form.append('title', title.trim() || file.name); form.append('file', file, file.name); form.append('description', description)
+    const response = await fetch('/api/evidence', { method: 'POST', body: form }); const body = await response.json(); setUploading(false)
+    if (!response.ok) { setError(body.error || 'Upload failed.'); return }
+    setSaved((current) => [body.evidence, ...current]); setUploadOpen(false); setFile(null); setTitle(''); setDescription('')
+  }
+
+  return <><section className="portal-card"><div className="portal-section-header"><div><p className="portal-eyebrow">EVIDENCE REGISTER</p><h2>Evidence</h2></div><button className="portal-primary small" onClick={() => setUploadOpen(true)}><Plus size={15} /> Add evidence</button></div><div className="evidence-list">{loading ? <div className="evidence-empty"><Loader2 className="spin" size={17} /> Loading evidence…</div> : items.map((item) => { const persisted = isPersisted(item); const name = persisted ? item.originalFilename : item.name; const mime = persisted ? item.mimeType : 'application/octet-stream'; return <div className="evidence-row" key={item.id}><div className="file-icon"><Icon mime={mime} /></div><div className="evidence-copy"><strong>{name}</strong><p>{persisted ? `${fileLabel(mime)} · ${item.id}` : `${item.type} · ${item.id}`}</p></div><span className="evidence-status">{persisted && item.status === 'Pending review' ? <><FileWarning size={13} /> Pending review</> : <><CheckCircle2 size={13} /> {persisted ? item.status : item.status}</>}</span><small>{persisted ? item.uploadedBy : item.addedBy}<br />{persisted ? displayDate(item.uploadedAt) : item.addedAt}</small><button className="portal-text-link evidence-view" onClick={() => setViewing(item)}>View</button></div> })}</div></section>{uploadOpen && <div className="netra-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setUploadOpen(false) }}><div className="netra-modal" role="dialog" aria-modal="true" aria-labelledby="add-evidence-title"><div className="netra-modal-head"><div><p className="portal-eyebrow">CASE {caseId}</p><h2 id="add-evidence-title">Add evidence</h2></div><button className="icon-button" onClick={() => setUploadOpen(false)} aria-label="Close"><X size={18} /></button></div><label className="evidence-file-input">Select file<input type="file" onChange={(event) => { const next = event.target.files?.[0] ?? null; setFile(next); if (next && !title) setTitle(next.name) }} /></label>{file && <p className="selected-file">{file.name} · {Math.ceil(file.size / 1024)} KB</p>}<label>Evidence title<input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={180} /></label><label>Description <span>(optional)</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={500} rows={3} /></label>{error && <p className="auth-error">{error}</p>}<div className="netra-modal-actions"><button className="portal-secondary" onClick={() => setUploadOpen(false)}>Cancel</button><button className="portal-primary" disabled={uploading} onClick={upload}>{uploading ? <><Loader2 className="spin" size={15} /> Saving…</> : 'Upload and register'}</button></div></div></div>}{viewing && <EvidenceViewer item={viewing} close={() => setViewing(null)} />}</>
+}
+
+function EvidenceViewer({ item, close }: { item: EvidenceItem; close: () => void }) { const persisted = isPersisted(item); const mime = persisted ? item.mimeType : ''; const source = persisted ? `/api/evidence/file?id=${encodeURIComponent(item.id)}` : ''; const previewable = persisted && (mime.startsWith('image/') || mime === 'application/pdf' || mime.startsWith('audio/') || mime.startsWith('video/') || mime.startsWith('text/') || mime.includes('json') || mime.includes('csv'))
+  return <div className="netra-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) close() }}><div className="netra-modal evidence-viewer" role="dialog" aria-modal="true" aria-labelledby="evidence-view-title"><div className="netra-modal-head"><div><p className="portal-eyebrow">EVIDENCE VIEWER</p><h2 id="evidence-view-title">{persisted ? item.originalFilename : item.name}</h2></div><button className="icon-button" onClick={close} aria-label="Close"><X size={18} /></button></div><dl className="evidence-meta"><div><dt>Evidence ID</dt><dd>{item.id}</dd></div><div><dt>File type</dt><dd>{persisted ? item.mimeType : item.type}</dd></div><div><dt>Uploaded by</dt><dd>{persisted ? item.uploadedBy : item.addedBy}</dd></div><div><dt>Status</dt><dd>{persisted ? item.status : item.status}</dd></div></dl><div className="evidence-preview">{previewable && mime.startsWith('image/') && <img src={source} alt={item.originalFilename} />}{previewable && mime === 'application/pdf' && <iframe title={item.originalFilename} src={source} />}{previewable && mime.startsWith('audio/') && <audio controls src={source} />}{previewable && mime.startsWith('video/') && <video controls src={source} />}{previewable && (mime.startsWith('text/') || mime.includes('json') || mime.includes('csv')) && <iframe title={`${item.originalFilename} text preview`} src={source} />}{!previewable && <div className="preview-unavailable"><FileWarning size={22} /><strong>Preview unavailable for this file type</strong><span>Open or download the original file to review it.</span></div>}</div>{persisted && <a className="portal-primary evidence-download" href={source} target="_blank" rel="noreferrer">Open / Download original</a>}</div></div>
+}
