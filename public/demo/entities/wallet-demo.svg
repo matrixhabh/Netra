@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <rect width="256" height="256" rx="32" fill="#182028"></rect>
+  <rect x="54" y="70" width="148" height="116" rx="18" fill="#557A70"></rect>
+  <path d="M54 98h148v28H54z" fill="#315C82"></path>
+  <rect x="136" y="112" width="66" height="42" rx="10" fill="#7698B5"></rect>
+  <circle cx="158" cy="133" r="7" fill="#15181B"></circle>
+  <text x="128" y="220" text-anchor="middle" font-family="Arial" font-size="12" fill="#ECEFF1" letter-spacing="2">DEMO WALLET</text>
+</svg>

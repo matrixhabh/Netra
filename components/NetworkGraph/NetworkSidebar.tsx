@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Activity,
   AlertTriangle,
@@ -42,9 +42,15 @@ export function NetworkSidebar({
   const [activeTab, setActiveTab] = useState<TabType>('metrics')
   const [influencerMetric, setInfluencerMetric] = useState<'degree' | 'betweenness' | 'pagerank'>('degree')
 
+  useEffect(() => {
+    if (window.matchMedia('(max-width: 767px)').matches) {
+      setIsOpen(false)
+    }
+  }, [])
+
   return (
     <div
-      className={`absolute top-4 bottom-4 left-4 z-20 flex transition-all duration-300 ${
+      className={`network-sidebar absolute top-4 bottom-4 left-4 z-20 flex transition-all duration-300 ${
         isOpen ? 'w-84' : 'w-10'
       }`}
     >
@@ -68,7 +74,7 @@ export function NetworkSidebar({
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="rounded-lg p-1 text-muted-foreground transition hover:bg-interactive hover:text-foreground"
+              className="network-hud-collapse rounded-lg p-1 text-muted-foreground transition hover:bg-interactive hover:text-foreground"
               aria-label="Collapse HUD"
             >
               <ChevronLeft size={16} />
@@ -202,7 +208,7 @@ export function NetworkSidebar({
                 <div className="rounded-lg border border-border bg-surface p-2.5 text-[11px] text-muted-foreground">
                   <p className="leading-relaxed">
                     Average degrees per entity is{' '}
-                    <strong className="text-foreground font-bold">{metrics.avgDegree}</strong>. 
+                    <strong className="text-foreground font-bold">{metrics.avgDegree}</strong>.
                     Tight modularity indicates partitioned operational syndicates.
                   </p>
                 </div>

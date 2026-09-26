@@ -41,6 +41,7 @@ interface CriminalNetwork3DProps {
   focusNodeId?: string | null
   enableAutoRotate?: boolean
   is2DMode?: boolean
+  entityMedia?: Record<string, string>
 }
 
 // ==========================================
@@ -104,6 +105,7 @@ export function getNodeThemeColor(riskScore: number, isDark: boolean): string {
 
 const materialCache = new Map<string, THREE.Material>()
 const textTextureCache = new Map<string, THREE.CanvasTexture>()
+const entityImageTextureCache = new Map<string, THREE.Texture>()
 const MAX_TEXTURE_CACHE = 40
 
 function getSharedNodeMaterial(
@@ -255,6 +257,7 @@ export function CriminalNetwork3D({
   focusNodeId,
   enableAutoRotate = false,
   is2DMode = false,
+  entityMedia = {},
 }: CriminalNetwork3DProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const fgRef = useRef<any>(null)
@@ -380,6 +383,105 @@ export function CriminalNetwork3D({
       mesh.scale.set(radius, radius, radius)
       group.add(mesh)
 
+      // Optional entity image.
+      // The original 3D shape remains underneath as the fallback while
+      // the image loads or if the image cannot be rendered.
+      const imageUrl = entityMedia[node.id]
+
+      if (imageUrl) {
+        const spriteMaterial = new THREE.SpriteMaterial({
+          transparent: true,
+          depthWrite: false,
+          opacity: isDimmed ? 0.4 : 0.98,
+        })
+
+        const sprite = new THREE.Sprite(spriteMaterial)
+        const imageSize = radius * 1.9
+
+        sprite.scale.set(imageSize, imageSize, 1)
+        sprite.position.set(0, 0, 0)
+        group.add(sprite)
+
+        let texture = entityImageTextureCache.get(imageUrl)
+
+        if (!texture) {
+          const loader = new THREE.TextureLoader()
+
+          texture = loader.load(
+            imageUrl,
+            (loadedTexture) => {
+              const image = loadedTexture.image as
+                | HTMLImageElement
+                | HTMLCanvasElement
+                | undefined
+
+              if (image?.width && image?.height) {
+                const aspect = image.width / image.height
+
+                if (aspect >= 1) {
+                  sprite.scale.set(
+                    imageSize,
+                    imageSize / aspect,
+                    1
+                  )
+                } else {
+                  sprite.scale.set(
+                    imageSize * aspect,
+                    imageSize,
+                    1
+                  )
+                }
+              }
+
+              // Once the image has successfully loaded, let it become
+              // the primary visual while preserving the existing geometry
+              // as the fallback.
+              mesh.visible = false
+              spriteMaterial.map = loadedTexture
+              spriteMaterial.needsUpdate = true
+            },
+            undefined,
+            () => {
+              // Keep the original 3D mesh visible if loading fails.
+              sprite.visible = false
+            }
+          )
+
+          texture.minFilter = THREE.LinearFilter
+          texture.magFilter = THREE.LinearFilter
+
+          entityImageTextureCache.set(imageUrl, texture)
+        } else {
+          spriteMaterial.map = texture
+          spriteMaterial.needsUpdate = true
+
+          const image = texture.image as
+            | HTMLImageElement
+            | HTMLCanvasElement
+            | undefined
+
+          if (image?.width && image?.height) {
+            const aspect = image.width / image.height
+
+            if (aspect >= 1) {
+              sprite.scale.set(
+                imageSize,
+                imageSize / aspect,
+                1
+              )
+            } else {
+              sprite.scale.set(
+                imageSize * aspect,
+                imageSize,
+                1
+              )
+            }
+          }
+
+          mesh.visible = true
+        }
+      }
+
       // Selection Indicator: Crisp geometric wireframe envelope (no decorative toruses or rings)
       if (isSelected) {
         const outlineMat = getSharedSelectionMaterial(isDarkMode)
@@ -424,7 +526,7 @@ export function CriminalNetwork3D({
 
       return group
     },
-    [selectedNode, neighborIds, isDarkMode, hoveredNode]
+    [selectedNode, neighborIds, isDarkMode, hoveredNode, entityMedia]
   )
 
   // ==========================================
@@ -628,6 +730,9 @@ export function CriminalNetwork3D({
 
       textTextureCache.forEach((tex) => tex.dispose())
       textTextureCache.clear()
+
+      entityImageTextureCache.forEach((texture) => texture.dispose())
+      entityImageTextureCache.clear()
 
       materialCache.forEach((mat) => mat.dispose())
       materialCache.clear()

@@ -1,12 +1,15 @@
 'use client'
 
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import {
   X,
   ArrowRight,
   ArrowLeft,
   FileText,
   Target,
+  Upload,
+  Trash2,
+  Image as ImageIcon,
 } from 'lucide-react'
 import { getRiskLevel } from '../../lib/networkAnalysis'
 import { getNodeThemeColor } from './CriminalNetwork3D'
@@ -16,6 +19,9 @@ interface EntityDetailsProps {
   node: NetworkNode | null
   allNodes: NetworkNode[]
   allLinks: NetworkEdge[]
+  entityMedia: Record<string, string>
+  onUploadImage: (nodeId: string, imageUrl: string) => void
+  onRemoveImage: (nodeId: string) => void
   onClose: () => void
   onFocusNode: (nodeId: string) => void
   onSelectNeighbor: (node: NetworkNode) => void
@@ -28,8 +34,50 @@ export function EntityDetails({
   onClose,
   onFocusNode,
   onSelectNeighbor,
+  entityMedia,
+  onUploadImage,
+  onRemoveImage,
 }: EntityDetailsProps) {
   if (!node) return null
+
+  const imageUrl = entityMedia[node.id]
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [imageError, setImageError] = useState<string | null>(null)
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+
+    if (!file) return
+
+    setImageError(null)
+
+    if (!file.type.startsWith('image/')) {
+      setImageError('Please select an image file.')
+      return
+    }
+
+    // Keep localStorage usage reasonable for the prototype.
+    if (file.size > 1.5 * 1024 * 1024) {
+      setImageError('Image must be smaller than 1.5 MB.')
+      return
+    }
+
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        onUploadImage(node.id, reader.result)
+      }
+    }
+
+    reader.onerror = () => {
+      setImageError('Unable to read this image.')
+    }
+
+    reader.readAsDataURL(file)
+
+    event.target.value = ''
+  }
 
   const nodeMap = React.useMemo(() => {
     const map = new Map<string, NetworkNode>()
@@ -126,6 +174,77 @@ export function EntityDetails({
 
       {/* Scrollable Intelligence Body */}
       <div className="flex-1 space-y-4 overflow-y-auto p-4 text-xs intel-hud-scrollbar">
+        {/* Entity Media */}
+        <div className="rounded-lg border border-border bg-surface p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <h4 className="text-[10px] font-bold tracking-wider text-foreground uppercase">
+                Entity Media
+              </h4>
+              <p className="mt-0.5 text-[9px] text-muted-foreground">
+                Optional visual reference
+              </p>
+            </div>
+
+            <ImageIcon size={14} className="text-muted-foreground" />
+          </div>
+
+          <div className="overflow-hidden rounded-lg border border-border bg-muted/40">
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={`${node.label} entity reference`}
+                className="h-36 w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-36 items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <ImageIcon size={24} className="mx-auto mb-2 opacity-50" />
+                  <span className="text-[10px]">
+                    No image attached
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+
+          <div className="mt-2 flex gap-2">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-2 py-2 text-[10px] font-semibold text-foreground transition hover:bg-interactive"
+            >
+              <Upload size={12} />
+              {imageUrl ? 'Replace image' : 'Attach image'}
+            </button>
+
+            {imageUrl && (
+              <button
+                onClick={() => {
+                  onRemoveImage(node.id)
+                  setImageError(null)
+                }}
+                className="flex items-center justify-center rounded-lg border border-red-500/30 bg-red-500/5 px-3 text-red-600 transition hover:bg-red-500/10 dark:text-red-400"
+                aria-label={`Remove image from ${node.label}`}
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
+          </div>
+
+          {imageError && (
+            <p className="mt-2 text-[9px] font-medium text-red-600 dark:text-red-400">
+              {imageError}
+            </p>
+          )}
+        </div>
         {/* Risk & Centrality Intelligence Cards */}
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded-lg border border-border bg-surface p-2 text-center">

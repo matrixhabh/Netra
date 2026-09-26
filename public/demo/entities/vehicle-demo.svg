@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <rect width="256" height="256" rx="32" fill="#182028"></rect>
+  <path d="M48 150l20-52h120l20 52v36H48z" fill="#315C82"></path>
+  <path d="M76 102h104l15 36H61z" fill="#7698B5"></path>
+  <rect x="76" y="111" width="42" height="23" rx="5" fill="#15181B"></rect>
+  <rect x="138" y="111" width="42" height="23" rx="5" fill="#15181B"></rect>
+  <circle cx="78" cy="186" r="18" fill="#15181B"></circle>
+  <circle cx="178" cy="186" r="18" fill="#15181B"></circle>
+  <text x="128" y="235" text-anchor="middle" font-family="Arial" font-size="12" fill="#ECEFF1" letter-spacing="2">DEMO VEHICLE</text>
+</svg>

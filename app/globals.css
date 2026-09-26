@@ -170,3 +170,26 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (max-width: 640px) { .evidence-meta { grid-template-columns: 1fr; } .evidence-row small { display: none; } .netra-modal { padding: 17px; } }
 
+.network-hud-collapse {
+  position: relative;
+  z-index: 60;
+}
+
+@media (max-width: 768px) {
+  .network-hud-collapse {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 200;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--foreground);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+}

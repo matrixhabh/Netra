@@ -45,6 +45,14 @@ const DEFAULT_FILTER_STATE: NetworkFilterState = {
   minConfidence: 0,
   selectedCluster: null,
 }
+const ENTITY_MEDIA_STORAGE_KEY = 'netra-entity-media-v1'
+const ENTITY_MEDIA_SEEDED_KEY = 'netra-entity-media-seeded-v1'
+
+const DEMO_ENTITY_MEDIA: Record<string, string> = {
+  Person: '/demo/entities/person-demo.svg',
+  Vehicle: '/demo/entities/vehicle-demo.svg',
+  BankAccount: '/demo/entities/wallet-demo.svg',
+}
 
 export function NetworkGraphContainer({
   initialCaseId = 'C-1042',
@@ -54,6 +62,41 @@ export function NetworkGraphContainer({
   const [datasetType, setDatasetType] = useState<'syndicate' | 'case' | 'cross-case'>(initialDataset)
   const [caseId, setCaseId] = useState(initialCaseId)
   const [filterState, setFilterState] = useState<NetworkFilterState>(DEFAULT_FILTER_STATE)
+  const [entityMedia, setEntityMedia] = useState<Record<string, string>>({})
+  const [entityMediaReady, setEntityMediaReady] = useState(false)
+
+  useEffect(() => {
+  try {
+    const stored = window.localStorage.getItem(ENTITY_MEDIA_STORAGE_KEY)
+
+    if (stored) {
+      const parsed = JSON.parse(stored)
+
+      if (parsed && typeof parsed === 'object') {
+        setEntityMedia(parsed)
+      }
+    }
+  }
+  catch {
+    // Keep the graph usable even if localStorage is unavailable/corrupt.
+    }
+  finally {
+    setEntityMediaReady(true)
+    }
+  }, [])
+
+  useEffect(() => {
+  if (!entityMediaReady) return
+
+  try {
+    window.localStorage.setItem(
+      ENTITY_MEDIA_STORAGE_KEY,
+      JSON.stringify(entityMedia)
+    )
+  } catch {
+    // Do not break investigation UI if browser storage is full.
+  }
+  }, [entityMedia, entityMediaReady])
 
   // Interactive selection state
   const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null)
@@ -82,6 +125,31 @@ export function NetworkGraphContainer({
         return getFullSyndicateGraph()
     }
   }, [datasetType, caseId])
+
+  useEffect(() => {
+  if (!entityMediaReady || !rawGraphData.nodes.length) return
+
+  const alreadySeeded =
+    window.localStorage.getItem(ENTITY_MEDIA_SEEDED_KEY) === '1'
+
+  if (alreadySeeded) return
+
+  setEntityMedia((current) => {
+    const next = { ...current }
+
+    ;(['Person', 'Vehicle', 'BankAccount'] as const).forEach((type) => {
+      const node = rawGraphData.nodes.find((candidate) => candidate.type === type)
+
+      if (node && !next[node.id]) {
+        next[node.id] = DEMO_ENTITY_MEDIA[type]
+      }
+    })
+
+    return next
+  })
+
+  window.localStorage.setItem(ENTITY_MEDIA_SEEDED_KEY, '1')
+  }, [entityMediaReady, rawGraphData.nodes])
 
   const availableRelTypes = useMemo(() => {
     return Array.from(new Set(rawGraphData.links.map((l) => l.relationshipType)))
@@ -152,6 +220,24 @@ export function NetworkGraphContainer({
     if (node) {
       setFocusNodeId(node.id)
     }
+  }, [])
+
+  const handleEntityImageUpload = useCallback(
+  (nodeId: string, imageUrl: string) => {
+    setEntityMedia((current) => ({
+      ...current,
+      [nodeId]: imageUrl,
+    }))
+  },
+  []
+  )
+
+  const handleEntityImageRemove = useCallback((nodeId: string) => {
+    setEntityMedia((current) => {
+      const next = { ...current }
+      delete next[nodeId]
+      return next
+    })
   }, [])
 
   // Camera reset
@@ -261,6 +347,7 @@ export function NetworkGraphContainer({
           focusNodeId={focusNodeId}
           enableAutoRotate={isAutoRotate}
           is2DMode={is2DMode}
+          entityMedia={entityMedia}
         />
 
         {/* Right Entity Profile Dossier */}
@@ -268,6 +355,9 @@ export function NetworkGraphContainer({
           node={selectedNode}
           allNodes={rawGraphData.nodes}
           allLinks={rawGraphData.links}
+          entityMedia={entityMedia}
+          onUploadImage={handleEntityImageUpload}
+          onRemoveImage={handleEntityImageRemove}
           onClose={() => setSelectedNode(null)}
           onFocusNode={(id) => setFocusNodeId(id)}
           onSelectNeighbor={handleNodeSelect}
