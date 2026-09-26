@@ -143,6 +143,13 @@
 .evidence-preview audio, .evidence-preview video { width: min(100%, 480px); }
 .preview-unavailable { display: grid; gap: 8px; place-items: center; padding: 30px; color: var(--muted-foreground); text-align: center; font-size: 12px; }
 .evidence-download { margin-top: 14px; text-align: center; text-decoration: none; }
+.evidence-actions { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+.evidence-danger { color: #a84848; }
+.portal-danger { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid #b85c5c; border-radius: 7px; background: #a84848; color: white; cursor: pointer; font: inherit; font-size: 12px; font-weight: 650; padding: 8px 11px; }
+.portal-danger:disabled { cursor: wait; opacity: .65; }
+.evidence-feedback { margin: 0 0 10px; border-radius: 7px; padding: 9px 11px; font-size: 12px; }
+.evidence-feedback.success { border: 1px solid color-mix(in srgb, #3f8d68 30%, var(--border)); background: color-mix(in srgb, #3f8d68 9%, var(--card)); color: #3f8d68; }
+.evidence-feedback.error { border: 1px solid color-mix(in srgb, #a84848 30%, var(--border)); background: color-mix(in srgb, #a84848 8%, var(--card)); color: #a84848; }
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (max-width: 640px) { .evidence-meta { grid-template-columns: 1fr; } .evidence-row small { display: none; } .netra-modal { padding: 17px; } }
