@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { evidence, evidenceAuditLog } from '@/lib/db/schema'
 import { getCase } from '@/lib/data/cases'
+import { canRemoveEvidence, getCaseAccess } from '@/lib/case-access'
 import { headers } from 'next/headers'
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024
@@ -21,6 +22,7 @@ export async function GET(request: Request) {
   const caseId = new URL(request.url).searchParams.get('caseId')?.trim()
   if (!caseId) return NextResponse.json({ error: 'Missing caseId' }, { status: 400 })
   if (!getCase(caseId)) return NextResponse.json({ error: 'Case not found' }, { status: 404 })
+  if (!await getCaseAccess(caseId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const rows = await db.select().from(evidence).where(eq(evidence.caseId, caseId)).orderBy(desc(evidence.uploadedAt))
   return NextResponse.json({ evidence: rows })
 }
@@ -35,6 +37,7 @@ export async function POST(request: Request) {
   const file = formData.get('file')
   if (!caseId || !(file instanceof File)) return NextResponse.json({ error: 'Case and file are required' }, { status: 400 })
   if (!getCase(caseId)) return NextResponse.json({ error: 'Case not found' }, { status: 404 })
+  if (!await getCaseAccess(caseId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   if (file.size <= 0 || file.size > MAX_FILE_SIZE) return NextResponse.json({ error: 'File must be between 1 byte and 100 MB' }, { status: 400 })
 
   const evidenceId = `EV-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
@@ -64,6 +67,9 @@ export async function DELETE(request: Request) {
   const [record] = await db.select().from(evidence).where(eq(evidence.id, id)).limit(1)
   if (!record) return NextResponse.json({ error: 'Evidence not found' }, { status: 404 })
   if (!getCase(record.caseId)) return NextResponse.json({ error: 'Case not found' }, { status: 404 })
+  const access = await getCaseAccess(record.caseId)
+  if (!access) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!canRemoveEvidence(access.role)) return NextResponse.json({ error: 'Supervisor or owner access is required to remove evidence' }, { status: 403 })
 
   try {
     await del(record.storagePath)

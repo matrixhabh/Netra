@@ -1,5 +1,13 @@
 import { bigint, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
+export const caseMemberships = pgTable('case_memberships', {
+  id: text('id').primaryKey(),
+  caseId: text('case_id').notNull(),
+  userId: text('user_id').notNull(),
+  role: text('role').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const evidence = pgTable('evidence', {
   id: text('id').primaryKey(),
   caseId: text('case_id').notNull(),
@@ -28,6 +36,6 @@ export const evidenceAuditLog = pgTable('evidence_audit_log', {
 export type Evidence = typeof evidence.$inferSelect
 export type NewEvidence = typeof evidence.$inferInsert
 
-export const schema = { evidence, evidenceAuditLog }
+export const schema = { caseMemberships, evidence, evidenceAuditLog }
 
 export default schema

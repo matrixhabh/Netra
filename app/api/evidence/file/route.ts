@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { evidence } from '@/lib/db/schema'
+import { getCaseAccess } from '@/lib/case-access'
 import { headers } from 'next/headers'
 
 export async function GET(request: Request) {
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
   if (!id) return NextResponse.json({ error: 'Missing evidence id' }, { status: 400 })
   const [record] = await db.select().from(evidence).where(eq(evidence.id, id)).limit(1)
   if (!record) return NextResponse.json({ error: 'Evidence not found' }, { status: 404 })
+  if (!await getCaseAccess(record.caseId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const result = await get(record.storagePath, { access: 'private', ifNoneMatch: request.headers.get('if-none-match') ?? undefined })
   if (!result) return NextResponse.json({ error: 'File not found' }, { status: 404 })
   if (result.statusCode === 304) return new NextResponse(null, { status: 304, headers: { ETag: result.blob.etag, 'Cache-Control': 'private, no-cache' } })
