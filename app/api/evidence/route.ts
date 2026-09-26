@@ -1,9 +1,11 @@
-import { put } from '@vercel/blob'
+import { del, put } from '@vercel/blob'
 import { desc, eq } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { evidence } from '@/lib/db/schema'
+import { evidence, evidenceAuditLog } from '@/lib/db/schema'
+import { getCase } from '@/lib/data/cases'
+import { canRemoveEvidence, getCaseAccess } from '@/lib/case-access'
 import { headers } from 'next/headers'
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024
@@ -19,6 +21,8 @@ export async function GET(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const caseId = new URL(request.url).searchParams.get('caseId')?.trim()
   if (!caseId) return NextResponse.json({ error: 'Missing caseId' }, { status: 400 })
+  if (!getCase(caseId)) return NextResponse.json({ error: 'Case not found' }, { status: 404 })
+  if (!await getCaseAccess(caseId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const rows = await db.select().from(evidence).where(eq(evidence.caseId, caseId)).orderBy(desc(evidence.uploadedAt))
   return NextResponse.json({ evidence: rows })
 }
@@ -32,6 +36,8 @@ export async function POST(request: Request) {
   const description = String(formData.get('description') ?? '').trim().slice(0, 500)
   const file = formData.get('file')
   if (!caseId || !(file instanceof File)) return NextResponse.json({ error: 'Case and file are required' }, { status: 400 })
+  if (!getCase(caseId)) return NextResponse.json({ error: 'Case not found' }, { status: 404 })
+  if (!await getCaseAccess(caseId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   if (file.size <= 0 || file.size > MAX_FILE_SIZE) return NextResponse.json({ error: 'File must be between 1 byte and 100 MB' }, { status: 400 })
 
   const evidenceId = `EV-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
@@ -50,4 +56,45 @@ export async function POST(request: Request) {
     description: description || null,
   }).returning()
   return NextResponse.json({ evidence: created }, { status: 201 })
+}
+
+export async function DELETE(request: Request) {
+  const user = await getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const id = new URL(request.url).searchParams.get('id')?.trim()
+  if (!id) return NextResponse.json({ error: 'Missing evidence id' }, { status: 400 })
+
+  const [record] = await db.select().from(evidence).where(eq(evidence.id, id)).limit(1)
+  if (!record) return NextResponse.json({ error: 'Evidence not found' }, { status: 404 })
+  if (!getCase(record.caseId)) return NextResponse.json({ error: 'Case not found' }, { status: 404 })
+  const access = await getCaseAccess(record.caseId)
+  if (!access) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!canRemoveEvidence(access.role)) return NextResponse.json({ error: 'Supervisor or owner access is required to remove evidence' }, { status: 403 })
+
+  try {
+    await del(record.storagePath)
+  } catch (error) {
+    console.error('[v0] Evidence Blob deletion failed:', error)
+    return NextResponse.json({ error: 'Unable to remove this evidence. No changes were made.' }, { status: 502 })
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx.delete(evidence).where(eq(evidence.id, record.id))
+      await tx.insert(evidenceAuditLog).values({
+        id: `AUD-${crypto.randomUUID().slice(0, 12).toUpperCase()}`,
+        evidenceId: record.id,
+        caseId: record.caseId,
+        action: 'Evidence removed',
+        actorId: user.id,
+        actorName: user.name || user.email,
+        metadata: { originalFilename: record.originalFilename, storagePath: record.storagePath },
+      })
+    })
+  } catch (error) {
+    console.error('[v0] Evidence database deletion failed after Blob removal:', error)
+    return NextResponse.json({ error: 'Evidence storage was removed, but the register could not be updated. Contact an administrator.' }, { status: 500 })
+  }
+
+  return NextResponse.json({ success: true, id: record.id })
 }

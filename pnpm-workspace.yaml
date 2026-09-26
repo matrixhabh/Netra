@@ -1,4 +1,3 @@
 minimumReleaseAgeExclude:
   - '@next/*'
   - next
-  - undici@6.29.0
