@@ -604,7 +604,7 @@ Login:
 judge@gmail.com
 
 Password:
-judge@123
+Judge@123
 ```
 
 > Replace the placeholders above with the actual disposable judge
